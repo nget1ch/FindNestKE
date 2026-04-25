@@ -1,0 +1,138 @@
+import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Plus, Trash2, Calendar, Home, LayoutDashboard } from 'lucide-react';
+import type { RootState } from '../../store';
+import { useDeleteHouseMutation, useGetBookingsQuery, useGetHousesQuery } from '../../store/apiSlice';
+import { AppLayout, PageShell, TopNav } from './shared';
+import { formatKes } from '../../lib/nestfind';
+
+function statusStyle(s: string) {
+  if (s === 'confirmed') return 'bg-secondary-fixed/40 text-secondary';
+  if (s === 'pending_payment') return 'bg-tertiary-fixed/40 text-tertiary';
+  return 'bg-surface-dim text-on-surface';
+}
+
+function statusLabel(s: string) {
+  if (s === 'pending_approval') return 'Pending approval';
+  if (s === 'active') return 'Approved (live)';
+  return s;
+}
+
+export default function LandlordDashboardPage() {
+  const user: any = useSelector((state: RootState) => state.auth.user);
+  const { data, isLoading } = useGetHousesQuery({ landlordId: user?.userId });
+  const { data: bookings, isLoading: bookLoading } = useGetBookingsQuery({ landlordId: user?.userId });
+  const [deleteHouse] = useDeleteHouseMutation();
+
+  const items = (data as any)?.items || data || [];
+  const landlordBookings = (bookings as any) || [];
+
+  return (
+    <AppLayout>
+      <TopNav />
+      <PageShell
+        title="Landlord dashboard"
+        subtitle="Create listings with the full form — they stay hidden from tenants until an admin approves them and sets the booking fee."
+        eyebrow="Portfolio"
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            to="/landlord/listings/new"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md transition hover:opacity-95"
+          >
+            <Plus className="h-4 w-4" />
+            Create listing
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="h-32 animate-pulse rounded-2xl bg-surface-dim" />
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-surface-container-highest bg-surface-container-lowest shadow-sm">
+            <div className="border-b border-surface-container-highest bg-surface p-4">
+              <h2 className="font-headline flex items-center gap-2 text-lg font-bold text-on-surface">
+                <Home className="h-5 w-5 text-primary" />
+                My listings
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-surface-container-highest bg-surface text-xs font-bold uppercase tracking-wide text-on-surface-variant">
+                    <th className="px-4 py-3">Property</th>
+                    <th className="px-4 py-3">Rent (KES)</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="w-20 px-4 py-3 text-right" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-4 py-10 text-center text-on-surface-variant">
+                        No listings yet — use Create listing to add your first property.
+                      </td>
+                    </tr>
+                  ) : (
+                    items.map((h: any) => (
+                      <tr key={h.houseId} className="border-b border-surface-container-highest last:border-0">
+                        <td className="px-4 py-3 font-medium text-on-surface">{h.title}</td>
+                        <td className="px-4 py-3 tabular-nums text-on-surface">{formatKes(h.monthlyRent)}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-block rounded-full bg-surface-dim px-2.5 py-0.5 text-xs font-bold capitalize text-on-surface">
+                            {statusLabel(h.status || '—')}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm('Delete this listing?')) void deleteHouse(h.houseId);
+                            }}
+                            className="inline-flex items-center justify-center rounded-lg p-2 text-error hover:bg-error-container/30"
+                            aria-label="Delete listing"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="overflow-hidden rounded-2xl border border-surface-container-highest bg-surface-container-lowest shadow-sm">
+          <div className="border-b border-surface-container-highest bg-surface p-4">
+            <h2 className="font-headline flex items-center gap-2 text-lg font-bold text-on-surface">
+              <Calendar className="h-5 w-5 text-primary" />
+              Bookings
+            </h2>
+          </div>
+          {bookLoading ? (
+            <div className="h-24 animate-pulse bg-surface-dim" />
+          ) : (
+            <ul className="divide-y divide-surface-container-highest">
+              {landlordBookings.length === 0 ? (
+                <li className="px-4 py-8 text-center text-sm text-on-surface-variant">No booking activity yet.</li>
+              ) : (
+                landlordBookings.map((b: any) => (
+                  <li key={b.bookingId} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+                    <span className="text-sm text-on-surface">
+                      <strong>#{b.bookingId}</strong> · House #{b.houseId}
+                    </span>
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${statusStyle(b.status)}`}>{b.status}</span>
+                  </li>
+                ))
+              )}
+            </ul>
+          )}
+        </div>
+        <p className="text-center text-xs text-on-surface-variant">
+          <LayoutDashboard className="inline h-3.5 w-3.5 align-text-bottom" /> Pending listings are reviewed in the admin dashboard before they appear to tenants.
+        </p>
+      </PageShell>
+    </AppLayout>
+  );
+}

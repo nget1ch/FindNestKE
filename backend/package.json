@@ -1,0 +1,57 @@
+{
+  "name": "house-hunting-api",
+  "version": "1.0.0",
+  "description": "Chatbot-Assisted House-Hunting Web Application for Kenya",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon --exec tsx src/index.ts",
+    "seed:admin": "node seeds/adminSeed.js",
+    "db:migrate": "tsx migrate.ts",
+    "db:seed": "tsx src/db/seed.ts"
+  },
+  "keywords": [
+    "house-hunting",
+    "kenya",
+    "mpesa",
+    "real-estate"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@hono/node-server": "^1.19.13",
+    "@neondatabase/serverless": "^1.0.2",
+    "axios": "^1.14.0",
+    "bcryptjs": "^3.0.3",
+    "busboy": "^1.6.0",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "helmet": "^8.1.0",
+    "hono": "^4.12.12",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemon": "^3.1.14",
+    "pg": "^8.20.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8",
+    "stripe": "^22.0.1",
+    "winston": "^3.19.0",
+    "xss-clean": "^0.1.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/busboy": "^1.5.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.5.2",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.21.0"
+  }
+}

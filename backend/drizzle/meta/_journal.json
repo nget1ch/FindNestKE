@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1775655384930,
+      "tag": "0000_quiet_psynapse",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1776328815236,
+      "tag": "0001_flimsy_wrecker",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777000000000,
+      "tag": "0002_user_role_tenant",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777100000000,
+      "tag": "0003_house_listing_meta",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1777016687615,
+      "tag": "0004_luxuriant_hydra",
+      "breakpoints": true
+    }
+  ]
+}
