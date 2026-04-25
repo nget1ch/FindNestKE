@@ -1,9 +1,9 @@
 import '../load-env.js';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle, NodePgDatabase } from 'drizzle-orm/node-postgres';
 import pg from 'pg';
 import * as schema from './schema';
 
-let _dbInstance: ReturnType<typeof drizzle> | null = null;
+let _dbInstance: NodePgDatabase<typeof schema> | null = null;
 
 export const getDatabase = () => {
   if (!_dbInstance) {
@@ -14,15 +14,10 @@ export const getDatabase = () => {
     const pool = new pg.Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
-      max: 5, // Reduced pool size for faster startup
-      min: 1, // Minimum connections
-      idleTimeoutMillis: 1000, // Much shorter idle timeout
-      connectionTimeoutMillis: 1000, // Faster connection timeout
-      acquireTimeoutMillis: 1000, // Faster acquire timeout
-      createTimeoutMillis: 1000, // Faster creation timeout
-      destroyTimeoutMillis: 1000, // Faster destroy timeout
-      reapIntervalMillis: 1000, // More frequent cleanup
-      createRetryIntervalMillis: 100, // Faster retry on connection failure
+      max: 20, 
+      min: 2, 
+      idleTimeoutMillis: 30000, 
+      connectionTimeoutMillis: 15000, 
     });
 
     _dbInstance = drizzle(pool, { schema });
@@ -30,8 +25,8 @@ export const getDatabase = () => {
   return _dbInstance;
 };
 
-// Export a proxy that lazily initializes the database
-export const db = new Proxy({} as ReturnType<typeof drizzle>, {
+// Export a proxy that lazily initializes the database with full schema support
+export const db = new Proxy({} as NodePgDatabase<typeof schema>, {
   get(target, prop) {
     const dbInstance = getDatabase();
     return dbInstance[prop as keyof typeof dbInstance];

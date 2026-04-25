@@ -47,6 +47,11 @@ async function seed() {
   const userData = [
     { fullName: 'John Mwangi', email: 'john@example.com', phone: '254711223344', nationalId: '12345678', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Nairobi' },
     { fullName: 'Mary Wanjiku', email: 'mary@example.com', phone: '254722334455', nationalId: '23456789', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Kiambu' },
+    { fullName: 'Alice Kamau', email: 'alice@example.com', phone: '254700000001', nationalId: '55667788', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Nairobi' },
+    { fullName: 'Bob Juma', email: 'bob@example.com', phone: '254700000002', nationalId: '66778899', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Kisumu' },
+    { fullName: 'Charlie Otieno', email: 'charlie@example.com', phone: '254700000003', nationalId: '77889900', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Mombasa' },
+    { fullName: 'David Njenga', email: 'david@example.com', phone: '254700000004', nationalId: '88990011', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Nakuru' },
+    { fullName: 'Eve Wambui', email: 'eve@example.com', phone: '254700000005', nationalId: '99001122', role: 'tenant' as any, accountStatus: 'active' as any, region: 'Nyeri' },
     { fullName: 'Peter Omondi', email: 'peter@example.com', phone: '254733445566', nationalId: '34567890', role: 'landlord' as any, accountStatus: 'approved' as any, region: 'Kisumu', verificationDocument: 'https://example.com/docs/peter-id.pdf' },
     { fullName: 'Grace Atieno', email: 'grace@example.com', phone: '254744556677', nationalId: '45678901', role: 'landlord' as any, accountStatus: 'pending' as any, region: 'Mombasa', verificationDocument: 'https://example.com/docs/grace-lease.pdf' },
     { fullName: 'Admin User', email: 'admin@example.com', phone: '254799001122', nationalId: '90123456', role: 'admin' as any, accountStatus: 'active' as any, region: 'Nairobi' },
@@ -168,7 +173,45 @@ async function seed() {
   await db.insert(houseImages).values(imageData as any);
   console.log(`✅ Added ${imageData.length} curated images (3 per house)`);
 
-  console.log('🚀 Seeding Completed Successfully with Multi-Image Support!');
+  // 6. BOOKINGS & PAYMENTS
+  const tenants = insertedUsers.filter(u => u.role === 'tenant');
+  const activeHouses = insertedHouses.filter(h => h.status === 'active');
+  
+  console.log('🌱 Generating confirmed bookings and payments for Gava Hub...');
+  const bookingData = [];
+  const numToGen = Math.min(tenants.length, activeHouses.length, 15);
+  
+  for (let i = 0; i < numToGen; i++) {
+    const house = activeHouses[i];
+    const tenant = tenants[i % tenants.length];
+    bookingData.push({
+      seekerId: tenant.userId,
+      houseId: house.houseId,
+      status: 'confirmed' as any,
+      bookingFee: house.bookingFee,
+      totalPrice: (parseFloat(house.monthlyRent) * 1.05).toString(),
+      moveInDate: new Date().toISOString(),
+      confirmedAt: new Date(),
+    });
+  }
+  const insertedBookings = await db.insert(bookings).values(bookingData as any).returning();
+
+  const paymentData = [];
+  for (const booking of insertedBookings) {
+    paymentData.push({
+      bookingId: booking.bookingId,
+      payerId: booking.seekerId,
+      amount: booking.bookingFee,
+      status: 'completed' as any,
+      method: 'mpesa' as any,
+      mpesaReceiptNumber: `R${Math.random().toString(36).substring(7).toUpperCase()}`,
+      paidAt: new Date(),
+    });
+  }
+  await db.insert(payments).values(paymentData as any);
+  console.log(`✅ Generated ${insertedBookings.length} confirmed bookings and payments.`);
+
+  console.log('🚀 Seeding Completed Successfully with Compliance Data!');
   await client.end();
 }
 

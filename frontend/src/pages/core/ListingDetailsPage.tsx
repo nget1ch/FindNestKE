@@ -27,10 +27,16 @@ export default function ListingDetailsPage() {
       <TopNav />
       <PageShell title={house?.title || 'Property'} subtitle={isLoading ? 'Loading property…' : 'Review details, then book in two steps with M-Pesa.'} hideHeader>
         {isLoading ? (
-          <div className="animate-pulse space-y-4 rounded-2xl border border-surface-container-highest bg-surface-container-lowest p-6">
-            <div className="aspect-[16/10] rounded-xl bg-surface-dim" />
-            <div className="h-4 w-1/2 rounded bg-surface-dim" />
-            <div className="h-3 w-full rounded bg-surface-dim" />
+          <div className="grid gap-8 lg:grid-cols-5 animate-pulse">
+            <div className="lg:col-span-3 space-y-4">
+              <div className="aspect-[16/10] rounded-2xl bg-surface-dim" />
+              <div className="flex gap-2">
+                {[1, 2, 3].map(i => <div key={i} className="h-20 w-24 rounded-lg bg-surface-dim" />)}
+              </div>
+            </div>
+            <div className="lg:col-span-2 space-y-4">
+              <div className="h-64 rounded-2xl bg-surface-dim" />
+            </div>
           </div>
         ) : error || !house ? (
           <div className="rounded-2xl border border-surface-container-highest bg-surface-container-low p-8 text-center">

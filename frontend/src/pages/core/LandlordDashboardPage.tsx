@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Plus, Trash2, Calendar, Home, LayoutDashboard } from 'lucide-react';
+import { Plus, Trash2, Calendar, Home, LayoutDashboard, ShieldAlert } from 'lucide-react';
 import type { RootState } from '../../store';
-import { useDeleteHouseMutation, useGetBookingsQuery, useGetHousesQuery } from '../../store/apiSlice';
+import { useDeleteHouseMutation, useGetBookingsQuery, useGetHousesQuery, useGetProfileQuery } from '../../store/apiSlice';
 import { AppLayout, PageShell, TopNav } from './shared';
 import { formatKes } from '../../lib/nestfind';
 
@@ -19,7 +19,10 @@ function statusLabel(s: string) {
 }
 
 export default function LandlordDashboardPage() {
-  const user: any = useSelector((state: RootState) => state.auth.user);
+  const authUser: any = useSelector((state: RootState) => state.auth.user);
+  const { data: profileData } = useGetProfileQuery();
+  const user = profileData?.user || authUser;
+  
   const { data, isLoading } = useGetHousesQuery({ landlordId: user?.userId });
   const { data: bookings, isLoading: bookLoading } = useGetBookingsQuery({ landlordId: user?.userId });
   const [deleteHouse] = useDeleteHouseMutation();
@@ -27,22 +30,52 @@ export default function LandlordDashboardPage() {
   const items = (data as any)?.items || data || [];
   const landlordBookings = (bookings as any) || [];
 
+  const isApproved = user?.accountStatus === 'approved';
+
   return (
     <AppLayout>
       <TopNav />
       <PageShell
         title="Landlord dashboard"
-        subtitle="Create listings with the full form — they stay hidden from tenants until an admin approves them and sets the booking fee."
+        subtitle="Manage your properties and review booking activity."
         eyebrow="Portfolio"
       >
+        {!isApproved && (
+          <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-warning/20 bg-warning-fixed/10 p-5 text-on-surface">
+            <div className="flex gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning-fixed/20 text-warning">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-headline font-bold">Verification Required</h3>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  Your landlord account is currently <strong>{user?.accountStatus || 'pending'}</strong>. 
+                  An administrator must verify your details before you can publish new listings.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Link
-            to="/landlord/listings/new"
-            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md transition hover:opacity-95"
-          >
-            <Plus className="h-4 w-4" />
-            Create listing
-          </Link>
+          {isApproved ? (
+            <Link
+              to="/landlord/listings/new"
+              className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-on-primary shadow-md transition hover:opacity-95"
+            >
+              <Plus className="h-4 w-4" />
+              Create listing
+            </Link>
+          ) : (
+            <button
+              disabled
+              title="Verification required"
+              className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-surface-dim px-4 py-2.5 text-sm font-bold text-on-surface-variant shadow-none cursor-not-allowed opacity-60"
+            >
+              <Plus className="h-4 w-4" />
+              Create listing (Locked)
+            </button>
+          )}
         </div>
 
         {isLoading ? (

@@ -1,18 +1,15 @@
 import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { Bot, Home, ArrowUpRight, Sparkles } from 'lucide-react';
-import type { RootState } from '../../store';
 import { AppLayout, PageShell, TopNav } from './shared';
 
 export default function TenantDashboardPage() {
-  const user: any = useSelector((state: RootState) => state.auth.user);
   return (
     <AppLayout>
       <TopNav />
       <PageShell
-        title={`Welcome, ${user?.fullName || 'there'}`}
-        subtitle="Start with the chatbot to narrow your search, or browse the full catalog when you are ready to compare on your own."
-        eyebrow="Tenant hub"
+        title="My Home Search"
+        subtitle="Track your applications, payments, and verified property matches."
+        eyebrow="Seeker hub"
       >
         <div className="grid gap-6 md:grid-cols-2">
           <Link

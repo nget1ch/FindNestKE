@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { toast } from 'react-hot-toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, Upload } from 'lucide-react';
 import { useCreateHouseMutation } from '../../store/apiSlice';
@@ -43,7 +44,7 @@ const labelClass = 'font-label text-xs font-bold text-on-surface';
 
 export default function CreateListingPage() {
   const navigate = useNavigate();
-  const [createHouse, { isLoading, error }] = useCreateHouseMutation();
+  const [createHouse, { isLoading }] = useCreateHouseMutation();
 
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
@@ -55,7 +56,7 @@ export default function CreateListingPage() {
   const [areaCharacter, setAreaCharacter] = useState<'urban' | 'suburban' | 'rural_quiet'>('urban');
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState<File[]>([]);
-  const [formError, setFormError] = useState<string | null>(null);
+
 
   const toggle = (set: Set<string>, id: string) => {
     const next = new Set(set);
@@ -66,24 +67,22 @@ export default function CreateListingPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setFormError(null);
-
     if (!title.trim()) {
-      setFormError('Title is required.');
+      toast.error('Title is required.');
       return;
     }
     if (!location.trim()) {
-      setFormError('Location is required.');
+      toast.error('Location is required.');
       return;
     }
     const rent = Number(monthlyRent);
     if (!Number.isFinite(rent) || rent <= 0) {
-      setFormError('Rent must be a positive number.');
+      toast.error('Rent must be a positive number.');
       return;
     }
     const br = Number(bedrooms);
     if (!Number.isFinite(br) || br < 0) {
-      setFormError('Bedrooms must be a valid number.');
+      toast.error('Bedrooms must be a valid number.');
       return;
     }
 
@@ -101,18 +100,15 @@ export default function CreateListingPage() {
     nearby.forEach((n) => fd.append('nearbyFacilities', n));
     files.forEach((f) => fd.append('images', f));
 
-    const result: any = await createHouse(fd);
-    if (result.error) {
-      const err = result.error as { data?: { error?: string; detail?: string; code?: string } };
-      setFormError(
-        err.data?.error ||
-          err.data?.detail ||
-          (typeof err.data === 'string' ? err.data : null) ||
-          'Could not submit listing. Check all fields and try again.'
-      );
-      return;
+    const loadingToast = toast.loading('Submitting listing...');
+    try {
+      await createHouse(fd).unwrap();
+      toast.success('Listing submitted for approval!', { id: loadingToast });
+      navigate('/landlord');
+    } catch (err: any) {
+      const errorMsg = err?.data?.error || 'Could not submit listing. Please try again.';
+      toast.error(errorMsg, { id: loadingToast });
     }
-    navigate('/landlord');
   };
 
   return (
@@ -277,11 +273,7 @@ export default function CreateListingPage() {
             </div>
           </div>
 
-          {(formError || (error as any)?.data?.error) && (
-            <p className="rounded-xl border border-error/30 bg-error-container/40 px-3 py-2 text-sm text-on-error-container">
-              {formError || (error as any)?.data?.error || 'Something went wrong.'}
-            </p>
-          )}
+
 
           <div className="flex flex-wrap gap-3 pt-2">
             <button
@@ -301,7 +293,7 @@ export default function CreateListingPage() {
           </div>
 
           <p className="text-xs text-on-surface-variant">
-            Booking fee is set only by an admin when they approve this listing. Tenants only see listings after approval.
+            Booking fee is set only by an admin when they approve this listing. Seekers only see listings after approval.
           </p>
         </form>
       </PageShell>

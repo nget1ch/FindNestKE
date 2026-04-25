@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Phone, ArrowRight, Shield, Loader2 } from 'lucide-react';
 import { useGetHouseByIdQuery } from '../../store/apiSlice';
@@ -48,8 +49,13 @@ export default function BookingPage() {
               <button
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3.5 text-sm font-bold text-on-primary shadow-md transition hover:opacity-95"
                 type="button"
-                onClick={() => navigate(`/tenant/payment/${id}`, { state: { phone } })}
-                disabled={!phone.trim() || phone.length < 9}
+                onClick={() => {
+                  if (!phone.trim() || phone.length < 10) {
+                    toast.error('Please enter a valid M-Pesa phone number (e.g. 2547XXXXXXXX)');
+                    return;
+                  }
+                  navigate(`/tenant/payment/${id}`, { state: { phone } });
+                }}
               >
                 Proceed to payment
                 <ArrowRight className="h-4 w-4" />

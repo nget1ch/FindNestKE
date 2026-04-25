@@ -163,7 +163,7 @@ export const listHouses = async (query: any) => {
     orderExpr = sortOrder === 'desc' ? desc(targetColumn) : asc(targetColumn);
   }
 
-  // Items query using select + join to support filtering on related table
+  // Full query with joins
   const itemsResult = await db.select({
     house: houses,
     location: locations,
@@ -225,7 +225,7 @@ export const approveHouse = async (houseId: number, adminId: number, bookingFeeK
 
   const [updated] = await db.update(houses).set({
     status: 'active',
-    bookingFee: String(bookingFeeKes),
+    bookingFee: String(bookingFeeKes.toFixed(2)),
     isVerified: true,
     verifiedById: adminId,
     verifiedAt: new Date(),

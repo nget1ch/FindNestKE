@@ -16,9 +16,17 @@ export default function PaymentPage() {
   const img = house ? getHouseImageUrl(house) : '';
 
   const pay = async () => {
-    const result: any = await createMpesaPush({ houseId: Number(id), phone });
-    const bookingId = result.data?.bookingId;
-    if (bookingId) navigate(`/tenant/booking-confirmation/${bookingId}`);
+    try {
+      const result: any = await createMpesaPush({ houseId: Number(id), phone }).unwrap();
+      if (result.bookingId) {
+        navigate('/tenant/payment-success', { state: { house, transactionId: result.transactionId } });
+      } else {
+        navigate('/tenant/payment-failure', { state: { house } });
+      }
+    } catch (err) {
+      console.error('Payment failed:', err);
+      navigate('/tenant/payment-failure', { state: { house } });
+    }
   };
 
   return (

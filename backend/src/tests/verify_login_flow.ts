@@ -52,7 +52,7 @@ async function testLoginFlow() {
         console.log('--- ALL LOGIN FLOW TESTS PASSED ---');
         process.exit(0);
     } catch (error: any) {
-        console.error('❌ LOGIN TEST FAILED:', error.message);
+        console.error('❌ LOGIN TEST FAILED:', error);
         process.exit(1);
     }
 }

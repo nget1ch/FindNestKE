@@ -1,4 +1,4 @@
-import { useGetRevenueQuery, useGetBookingsQuery } from '../../store/apiSlice';
+import { useGetPaymentsQuery, useGetBookingsQuery } from '../../store/apiSlice';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
 import { formatCurrency } from '../../utils/helpers';
@@ -8,15 +8,22 @@ export default function LandlordOverview() {
   const { user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
   
-  const { data: revenueData } = useGetRevenueQuery({ 
+  const { data: paymentsData } = useGetPaymentsQuery({ 
     landlordId: user?.role === 'landlord' ? user.userId : undefined 
   });
-  const { data: bookings } = useGetBookingsQuery({ 
+  const { data: bookingsRaw } = useGetBookingsQuery({ 
     landlordId: user?.role === 'landlord' ? user.userId : undefined 
   });
 
-  const revenue = revenueData?.data ?? null;
-  const summary = revenue?.summary || { total_revenue: 0, total_payments: 0, average_payment: 0 };
+  const payments = Array.isArray(paymentsData) ? paymentsData : paymentsData?.items || [];
+  const bookings = Array.isArray(bookingsRaw) ? bookingsRaw : bookingsRaw?.items || [];
+
+  const totalRevenue = payments.reduce((sum: number, p: any) => sum + parseFloat(p.amount || 0), 0);
+  const summary = {
+    total_revenue: totalRevenue,
+    total_payments: payments.length,
+    average_payment: payments.length > 0 ? totalRevenue / payments.length : 0
+  };
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 text-left">
@@ -77,7 +84,7 @@ export default function LandlordOverview() {
               <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Property Node</th>
-                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Tenant ID</th>
+                  <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Seeker ID</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Status</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline text-right">Yield (KES)</th>
                   <th className="px-10 py-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] font-headline">Timeline</th>

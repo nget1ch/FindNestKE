@@ -56,33 +56,47 @@ export const loginService = async (email: string, password: string) => {
 
   const user = await db.query.users.findFirst({
     where: eq(users.email, normalizedEmail),
-    with: { auth: true },
   });
 
-  console.log('📊 [loginService] User query result:', user ? `Found user ${user.userId}` : 'User not found');
-  if (!user || !user.auth) {
+  if (!user) {
+    console.log('❌ [loginService] User not found');
+    throw new Error('Invalid email or password');
+  }
+
+  const userAuth = await db.query.auth.findFirst({
+    where: eq(auth.userId, user.userId),
+  });
+
+  const userWithAuth = { ...user, auth: userAuth };
+  const userToUse = userWithAuth;
+
+  console.log('📊 [loginService] User query result:', userToUse ? `Found user ${userToUse.userId}` : 'User not found');
+  if (!userToUse || !userToUse.auth) {
     console.log('❌ [loginService] User or auth record missing');
     throw new Error('Invalid email or password');
   }
 
-  console.log('👤 [loginService] User status:', user.accountStatus);
-  if (user.accountStatus === 'inactive') {
+  const userStatus = userToUse.accountStatus;
+  const userAuthRecord = userToUse.auth;
+
+  console.log('👤 [loginService] User status:', userStatus);
+  if (userStatus === 'inactive') {
     console.log('❌ [loginService] Account is inactive');
     throw new Error('Account is deactivated. Contact your administrator.');
   }
 
   // Check if account is locked
-  if (user.auth.lockedUntil && user.auth.lockedUntil > new Date()) {
-    console.log('❌ [loginService] Account locked until:', user.auth.lockedUntil);
-    throw new Error(`Account is locked until ${user.auth.lockedUntil.toISOString()}`);
+  if (userAuthRecord.lockedUntil && userAuthRecord.lockedUntil > new Date()) {
+    console.log('❌ [loginService] Account locked until:', userAuthRecord.lockedUntil);
+    throw new Error(`Account is locked until ${userAuthRecord.lockedUntil.toISOString()}`);
   }
 
   console.log('🔐 [loginService] Comparing passwords...');
-  const isMatch = await bcrypt.compare(password, user.auth.passwordHash);
+  const isMatch = await bcrypt.compare(password, userAuthRecord.passwordHash);
   console.log('🔐 [loginService] Password match:', isMatch);
 
   if (!isMatch) {
-    const newAttempts = (user.auth.loginAttempts ?? 0) + 1;
+    const newAttempts = (userAuthRecord.loginAttempts ?? 0) + 1;
     console.log(`❌ [loginService] Invalid password, attempt ${newAttempts}/${MAX_LOGIN_ATTEMPTS}`);
     const shouldLock = newAttempts >= MAX_LOGIN_ATTEMPTS;
     await db
@@ -94,7 +108,7 @@ export const loginService = async (email: string, password: string) => {
           : null,
         updatedAt: new Date(),
       })
-      .where(eq(auth.userId, user.userId));
+      .where(eq(auth.userId, userToUse.userId));
 
     if (shouldLock) {
       console.log(`🔒 [loginService] Account locked for ${LOCK_DURATION_MINUTES} minutes`);
@@ -116,25 +130,24 @@ export const loginService = async (email: string, password: string) => {
       refreshTokenExpiresAt: refreshExpiresAt,
       updatedAt: new Date(),
     })
-    .where(eq(auth.userId, user.userId));
+    .where(eq(auth.userId, userToUse.userId));
 
   await db
     .update(users)
     .set({ lastLoginAt: new Date() })
-    .where(eq(users.userId, user.userId));
+    .where(eq(users.userId, userToUse.userId));
 
-  const accessToken = signAccessToken({ userId: user.userId, role: user.role });
+  const accessToken = signAccessToken({ userId: userToUse.userId, role: userToUse.role });
 
-  const { auth: _auth, ...userProfile } = user;
   console.log('✅ [loginService] Login successful, returning tokens');
   return {
     accessToken,
     refreshToken,
-    requiresPasswordChange: user.auth.isTemporaryPassword,
+    requiresPasswordChange: userAuthRecord.isTemporaryPassword,
     user: {
-      ...userProfile,
-      id: userProfile.userId,
-      isTemporaryPassword: user.auth.isTemporaryPassword,
+      ...userToUse,
+      id: userToUse.userId,
+      isTemporaryPassword: userAuthRecord.isTemporaryPassword,
     },
   };
 };
@@ -149,8 +162,13 @@ export const adminCreateUserService = async (data: {
   role: 'tenant' | 'landlord' | 'admin';
   region?: string;
 }) => {
-  console.log('🔍 [adminCreateUserService] Creating user:', data.email);
-  const existing = await db.query.users.findFirst({ where: eq(users.email, data.email) });
+  const normalizedEmail = data.email.trim().toLowerCase();
+  console.log('🔍 [adminCreateUserService] Creating user:', normalizedEmail);
+  
+  const existing = await db.query.users.findFirst({ 
+    where: eq(users.email, normalizedEmail) 
+  });
+  
   if (existing) {
     console.log('❌ [adminCreateUserService] User already exists');
     throw new Error('A user with that email already exists');
@@ -163,13 +181,14 @@ export const adminCreateUserService = async (data: {
   const [newUser] = await db
     .insert(users)
     .values({
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
-      nationalId: data.nationalId,
+      fullName: data.fullName.trim(),
+      email: normalizedEmail,
+      phone: data.phone.trim(),
+      nationalId: data.nationalId?.trim() || null,
       role: data.role,
-      region: data.region,
+      region: data.region?.trim() || null,
       accountStatus: 'pending',
+      updatedAt: new Date(),
     })
     .returning();
 
@@ -178,6 +197,7 @@ export const adminCreateUserService = async (data: {
     passwordHash,
     isTemporaryPassword: true,
     temporaryPasswordExpiresAt: expiresAt,
+    updatedAt: new Date(),
   });
 
   console.log('✅ [adminCreateUserService] User created with temp password');
@@ -311,15 +331,16 @@ export const landlordRegistrationService = async (data: {
   kraPin?: string;
   agencyName?: string;
 }) => {
-  console.log('🏠 [landlordRegistrationService] Starting landlord registration for:', data.email);
+  const normalizedEmail = data.email.trim().toLowerCase();
+  console.log('🏠 [landlordRegistrationService] Starting landlord registration for:', normalizedEmail);
 
   // Check if user already exists
   const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, data.email.toLowerCase().trim()),
+    where: eq(users.email, normalizedEmail),
   });
 
   if (existingUser) {
-    console.log('❌ [landlordRegistrationService] User already exists:', data.email);
+    console.log('❌ [landlordRegistrationService] User already exists:', normalizedEmail);
     throw new Error('User with this email already exists');
   }
 
@@ -333,7 +354,7 @@ export const landlordRegistrationService = async (data: {
       .insert(users)
       .values({
         fullName: data.fullName.trim(),
-        email: data.email.toLowerCase().trim(),
+        email: normalizedEmail,
         phone: data.phone.trim(),
         nationalId: data.nationalId?.trim() || null,
         role: 'landlord',
@@ -362,10 +383,8 @@ export const landlordRegistrationService = async (data: {
 
   console.log('✅ [landlordRegistrationService] Landlord registered successfully:', newUser.userId);
   
-  // Return user without sensitive data
-  const { ...userProfile } = newUser;
   return {
-    user: userProfile,
+    user: newUser,
     message: 'Landlord registration successful. Your account is pending admin approval.',
   };
 };
@@ -482,7 +501,7 @@ export const getLandlordsByStatusService = async (status?: string, page = 1, lim
     },
     limit,
     offset,
-    orderBy: (users, { desc }) => [desc(users.createdAt)],
+    orderBy: (u: any, { desc }: any) => [desc(u.createdAt)],
   });
 
   console.log('✅ [getLandlordsByStatusService] Found landlords:', landlords.length);

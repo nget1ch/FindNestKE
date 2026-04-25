@@ -22,6 +22,7 @@ export default function PublicHeader({ variant = 'transparent' }: Props) {
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
         <Link
           to="/"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className={`font-headline flex items-center gap-2 text-lg font-bold ${
             variant === 'transparent' ? 'text-white' : 'text-primary'
           }`}
@@ -45,7 +46,7 @@ export default function PublicHeader({ variant = 'transparent' }: Props) {
           >
             Listings
           </Link>
-          <a href="#how" className={`rounded-lg px-3 py-2 text-sm font-medium ${navLink}`}>
+          <a href="/#how" className={`rounded-lg px-3 py-2 text-sm font-medium ${navLink}`}>
             How it works
           </a>
           <Link
@@ -95,7 +96,7 @@ export default function PublicHeader({ variant = 'transparent' }: Props) {
               Listings
             </Link>
             <a
-              href={variant === 'transparent' ? '/#how' : '#how'}
+              href="/#how"
               className={`rounded-lg px-3 py-2 text-sm font-medium ${
                 variant === 'transparent' ? 'text-white/90' : 'text-on-surface'
               }`}

@@ -139,6 +139,18 @@ export const apiSlice = createApi({
         body: data,
       }),
     }),
+    getProfile: builder.query<any, void>({
+      query: () => '/users/profile',
+      providesTags: ['User'],
+    }),
+    getComplianceLogs: builder.query<any, any>({
+      query: (params) => ({ url: '/compliance/logs', params }),
+      providesTags: ['Payment'], // Use Payment tag to refresh when payments happen
+    }),
+    fileReturns: builder.mutation<any, any>({
+      query: (data) => ({ url: '/compliance/file', method: 'POST', body: data }),
+      invalidatesTags: ['Payment'],
+    }),
   }),
 });
 
@@ -160,4 +172,7 @@ export const {
   useSendMessageMutation,
   useListUsersQuery,
   useUpdateUserMutation,
+  useGetProfileQuery,
+  useGetComplianceLogsQuery,
+  useFileReturnsMutation,
 } = apiSlice;

@@ -9,6 +9,7 @@ import { housesRouter } from './houses/houses.router.js';
 import { chatbotSessionsRouter } from './chatbot/chatbot.router.js';
 import { bookingsRouter } from './bookings/bookings.router.js';
 import { paymentsRouter } from './payments/payments.router.js';
+import { complianceRouter } from './compliance/compliance.router.js';
 
 const app = new Hono();
 
@@ -29,6 +30,7 @@ app.route('/api/houses', housesRouter);
 app.route('/api/chatbot', chatbotSessionsRouter);
 app.route('/api/bookings', bookingsRouter);
 app.route('/api/payments', paymentsRouter);
+app.route('/api/compliance', complianceRouter);
 
 // 404 handler
 app.notFound((c) => c.json({ error: 'Route not found' }, 404));

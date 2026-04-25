@@ -17,7 +17,8 @@ const columnMap: Record<string, string> = {
 };
 
 export const createUser = async (data: any) => {
-  const { password, ...userData } = data;
+  const { password, email, ...userData } = data;
+  const normalizedEmail = email.trim().toLowerCase();
   
   let passwordHash: string;
   let isTemporary = false;
@@ -31,7 +32,13 @@ export const createUser = async (data: any) => {
     isTemporary = true;
   }
 
-  const [newUser] = await db.insert(users).values(userData).returning();
+  const accountStatus = userData.role === 'landlord' ? 'pending' : 'active';
+  
+  const [newUser] = await db.insert(users).values({
+    ...userData,
+    email: normalizedEmail,
+    accountStatus
+  }).returning();
   
   await db.insert(auth).values({ 
     userId: newUser.userId, 
