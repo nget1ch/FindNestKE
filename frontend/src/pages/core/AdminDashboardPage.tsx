@@ -31,6 +31,7 @@ import {
   useUpdateUserMutation,
   useGetComplianceLogsQuery,
   useFileReturnsMutation,
+  useApproveLandlordMutation,
 } from '../../store/apiSlice';
 import { AppLayout, PageShell, TopNav } from './shared';
 import { formatKes } from '../../lib/nestfind';
@@ -124,6 +125,7 @@ export default function AdminDashboardPage() {
   const [approveListing, { isLoading: approveBusy }] = useApproveListingMutation();
   const [rejectListing, { isLoading: rejectBusy }] = useRejectListingMutation();
   const [updateUser, { isLoading: userUpdateBusy }] = useUpdateUserMutation();
+  const [approveLandlord, { isLoading: approveLandlordBusy }] = useApproveLandlordMutation();
   const [fileReturns, { isLoading: filingBusy }] = useFileReturnsMutation();
 
   const [feeByHouse, setFeeByHouse] = useState<Record<number, string>>({});
@@ -424,7 +426,17 @@ export default function AdminDashboardPage() {
                             <span className="bg-secondary-fixed/20 text-secondary text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1 w-fit"><ShieldCheck className="h-2.5 w-2.5"/> PIN Verified</span>
                           </td>
                           <td className="px-4 py-4 text-right">
-                            <button disabled={userUpdateBusy} onClick={() => updateUser({ userId: u.userId, data: { accountStatus: 'approved' } }).unwrap().then(() => toast.success('Authorized'))} className="bg-secondary text-white px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase shadow-sm">Authorize</button>
+                            <button disabled={approveLandlordBusy} onClick={() => { 
+                              approveLandlord(u.userId).unwrap().then(() => {
+                                toast.success('Landlord authorized successfully');
+                              }).catch((err: any) => {
+                                console.error('Approve failed:', err);
+                                toast.error(err.data?.message || err.data?.error || 'Authorization failed');
+                              });
+                            }} className="bg-secondary text-white px-3 py-1.5 rounded-lg font-bold text-[10px] uppercase shadow-sm hover:bg-secondary/90 transition-all disabled:opacity-50 flex items-center gap-1.5">
+                              {approveLandlordBusy ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                              Authorize
+                            </button>
                           </td>
                         </tr>
                       ))

@@ -1,52 +1,48 @@
 import { useState } from 'react';
-import { useListUsersQuery, useVerifyKraMutation } from '../../store/apiSlice';
+import { useListUsersQuery, useApproveLandlordMutation } from '../../store/apiSlice';
 import { toast } from 'react-hot-toast';
-import { formatCurrency } from '../../utils/helpers';
+import { formatCurrency, getDocUrl } from '../../utils/helpers';
 
 export default function LandlordDirectory() {
   const [search, setSearch] = useState('');
   const { data, isLoading } = useListUsersQuery({ role: 'landlord', search });
-  const [verifyKra, { isLoading: isVerifying }] = useVerifyKraMutation();
+  const [approveLandlord, { isLoading: isApproving }] = useApproveLandlordMutation();
 
-  const handleVerifyKRA = async (userId: number, kraPin: string) => {
-    if (!kraPin) {
-      toast.error('No KRA PIN provided for this landlord.');
-      return;
-    }
+  const handleApprove = async (userId: number) => {
     try {
-      await verifyKra({ userId, kraPin }).unwrap();
-      toast.success('KRA PIN verified and account activated.');
+      await approveLandlord(userId).unwrap();
+      toast.success('Landlord account approved successfully.');
     } catch (err: any) {
-      toast.error(err.data?.error || 'Verification failed.');
+      toast.error(err.data?.error || 'Approval failed.');
     }
   };
 
   const landlords = data?.items || [];
   
   const handleBatchVerify = async () => {
-    const unverified = landlords.filter((l: any) => l.accountStatus !== 'active' && l.kraPin);
+    const unverified = landlords.filter((l: any) => l.accountStatus === 'pending');
     
     if (unverified.length === 0) {
-      toast.error('No unverified landlords with KRA PINs found to process.');
+      toast.error('No pending landlord applications found to process.');
       return;
     }
 
-    toast.loading(`Initiating batch verification for ${unverified.length} landlords...`, { id: 'batch-verify' });
+    toast.loading(`Initiating batch approval for ${unverified.length} landlords...`, { id: 'batch-verify' });
     
     let successCount = 0;
     for (const landlord of unverified) {
       try {
-        await verifyKra({ userId: landlord.userId, kraPin: landlord.kraPin }).unwrap();
+        await approveLandlord(landlord.userId).unwrap();
         successCount++;
       } catch (err) {
-        console.error(`Failed to verify user ${landlord.userId}`);
+        console.error(`Failed to approve user ${landlord.userId}`);
       }
     }
     
     if (successCount === unverified.length) {
-      toast.success(`Successfully verified ${successCount} landlords.`, { id: 'batch-verify' });
+      toast.success(`Successfully approved ${successCount} landlords.`, { id: 'batch-verify' });
     } else {
-      toast.success(`Verified ${successCount} of ${unverified.length} landlords. Some failed.`, { id: 'batch-verify' });
+      toast.success(`Approved ${successCount} of ${unverified.length} landlords. Some failed.`, { id: 'batch-verify' });
     }
   };
 
@@ -54,7 +50,7 @@ export default function LandlordDirectory() {
 
   const metrics = {
     total: data?.total || landlords.length,
-    verified: landlords.filter((l: any) => l.accountStatus === 'active').length,
+    verified: landlords.filter((l: any) => l.accountStatus === 'approved').length,
     revenue: landlords.reduce((acc: number, l: any) => acc + (Number(l.totalRevenue) || 0), 0),
     newThisWeek: landlords.filter((l: any) => {
       const created = new Date(l.createdAt);
@@ -174,7 +170,8 @@ export default function LandlordDirectory() {
             <thead>
               <tr className="bg-slate-50/50">
                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50">Landlord Profile</th>
-                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50">KRA Protocol</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50">Verification Document</th>
+                <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50">Status</th>
                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50 text-center">Portfolio</th>
                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50">Yield (KES)</th>
                 <th className="px-10 py-6 text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/50 text-right">Actions</th>
@@ -199,20 +196,33 @@ export default function LandlordDirectory() {
                     </div>
                   </td>
                   <td className="px-10 py-6">
-                    {landlord.accountStatus === 'active' ? (
+                    {landlord.verificationDocument ? (
+                      <a href={getDocUrl(landlord.verificationDocument)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline text-xs font-bold">
+                        <span className="material-symbols-outlined text-sm">description</span> View Doc
+                      </a>
+                    ) : (
+                      <span className="text-on-surface-variant text-xs opacity-50">No Document</span>
+                    )}
+                  </td>
+                  <td className="px-10 py-6">
+                    {landlord.accountStatus === 'approved' ? (
                       <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary-container text-secondary text-[9px] font-black uppercase tracking-widest shadow-sm">
                         <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                        Verified
+                        Approved
                       </span>
-                    ) : (
+                    ) : landlord.accountStatus === 'pending' ? (
                       <button 
-                        onClick={() => handleVerifyKRA(landlord.userId, landlord.kraPin || '')}
-                        disabled={isVerifying}
+                        onClick={() => handleApprove(landlord.userId)}
+                        disabled={isApproving}
                         className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container-highest text-on-surface-variant text-[9px] font-black uppercase tracking-widest hover:bg-primary-fixed hover:text-primary transition-all disabled:opacity-50"
                       >
-                        <span className="material-symbols-outlined text-xs animate-pulse">history</span>
-                        {isVerifying ? 'Checking...' : 'Verify KRA'}
+                        <span className="material-symbols-outlined text-xs animate-pulse">check_circle</span>
+                        {isApproving ? 'Approving...' : 'Approve'}
                       </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-error/10 text-error text-[9px] font-black uppercase tracking-widest shadow-sm">
+                        Rejected
+                      </span>
                     )}
                   </td>
                   <td className="px-10 py-6 text-center font-black text-primary text-sm">{landlord.totalListings || 0} Assets</td>
@@ -261,14 +271,14 @@ export default function LandlordDirectory() {
               </div>
            </div>
            <p className="text-sm text-on-surface leading-normal font-medium">
-              I've detected <span className="text-secondary font-black">{landlords.filter((l: any) => l.accountStatus !== 'active' && l.kraPin).length} unverified</span> KRA PINs. Would you like me to initiate a batch verification protocol with GavaConnect?
+              I've detected <span className="text-secondary font-black">{landlords.filter((l: any) => l.accountStatus === 'pending').length} pending</span> landlord applications. Would you like me to initiate a batch approval protocol for these verified documentations?
            </p>
            <div className="mt-6 flex gap-3">
               <button 
                 onClick={handleBatchVerify}
                 className="text-[10px] font-black uppercase tracking-widest bg-primary text-white px-5 py-2.5 rounded-full hover:scale-105 transition-all shadow-lg"
               >
-                Start Protocol
+                Approve All
               </button>
               <button className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant bg-slate-100 px-5 py-2.5 rounded-full hover:bg-slate-200 transition-all">Dismiss</button>
            </div>

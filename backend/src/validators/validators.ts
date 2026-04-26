@@ -57,8 +57,8 @@ export const landlordRegistrationSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits'),
-  verificationDocument: z.string().url('Verification document must be a valid URL'),
+  phone: z.string().min(9, 'Phone number must be at least 9 digits'),
+  verificationDocument: z.string().min(1, 'Verification document is required'),
   nationalId: z.string().optional(),
   region: z.string().optional(),
   kraPin: z.string().optional(),
@@ -265,7 +265,29 @@ export const createAuditLogSchema = auditLogSchema;
 // ============================================================
 // UPDATE (partial)
 // ============================================================
-export const updateUserSchema = createUserSchema.partial();
+
+/**
+ * SECURITY: Profile update schema for user self-updates
+ * Explicitly excludes sensitive fields: role, accountStatus, email, password
+ * Users can only update profile information (name, phone, etc.)
+ */
+export const profileUpdateSchema = createUserSchema.omit({
+  email: true,
+  role: true,
+  password: true,
+}).partial();
+
+/**
+ * SECURITY: Admin user update schema
+ * Explicitly excludes sensitive fields: role, email, password
+ * Admins updating user records should use separate endpoints for role/email changes
+ */
+export const updateUserSchema = createUserSchema.omit({
+  email: true,
+  role: true,
+  password: true,
+}).partial();
+
 export const updateLocationSchema = createLocationSchema.partial();
 export const updateHouseSchema = createHouseSchema.partial();
 export const updateHouseImageSchema = createHouseImageSchema.partial();

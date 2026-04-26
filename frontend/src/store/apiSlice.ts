@@ -43,6 +43,13 @@ export const apiSlice = createApi({
         body: data,
       }),
     }),
+    registerLandlordWithDocs: builder.mutation({
+      query: (data) => ({
+        url: '/auth/register-landlord-with-docs',
+        method: 'POST',
+        body: data,
+      }),
+    }),
 
     listUsers: builder.query<any, any>({
       query: (params) => ({ url: '/users', params }),
@@ -151,12 +158,61 @@ export const apiSlice = createApi({
       query: (data) => ({ url: '/compliance/file', method: 'POST', body: data }),
       invalidatesTags: ['Payment'],
     }),
+    
+    getNotifications: builder.query<any, any>({
+      query: (params) => ({ url: '/mock/getNotifications', params }),
+    }),
+    getOverviewStats: builder.query<any, any>({
+      query: (params) => ({ url: '/mock/getOverviewStats', params }),
+    }),
+    listAuditLogs: builder.query<any, any>({
+      query: (params) => ({ url: '/mock/listAuditLogs', params }),
+    }),
+    getRevenue: builder.query<any, any>({
+      query: (params) => ({ url: '/mock/getRevenue', params }),
+    }),
+    getMarketPulse: builder.query<any, any>({
+      query: (params) => ({ url: '/mock/getMarketPulse', params }),
+    }),
+    getNeighborhoodTrends: builder.query<any, any>({
+      query: (params) => ({ url: '/mock/getNeighborhoodTrends', params }),
+    }),
+    markNotificationRead: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/markNotificationRead', method: 'POST', body: data }),
+    }),
+    markAllNotificationsRead: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/markAllNotificationsRead', method: 'POST', body: data }),
+    }),
+    submitNilFiling: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/submitNilFiling', method: 'POST', body: data }),
+    }),
+    verifyCompliance: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/verifyCompliance', method: 'POST', body: data }),
+    }),
+    verifyNationalId: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/verifyNationalId', method: 'POST', body: data }),
+    }),
+    createStripeIntent: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/createStripeIntent', method: 'POST', body: data }),
+    }),
+    resetSession: builder.mutation<any, any>({
+      query: (data) => ({ url: '/mock/resetSession', method: 'POST', body: data }),
+    }),
+    approveLandlord: builder.mutation<any, number>({
+      query: (userId) => ({ url: `/auth/landlords/${userId}/approve`, method: 'POST' }),
+      invalidatesTags: ['User'],
+    }),
+    rejectLandlord: builder.mutation<any, { userId: number; reason?: string }>({
+      query: ({ userId, reason }) => ({ url: `/auth/landlords/${userId}/reject`, method: 'POST', body: { reason } }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
 export const {
   useLoginMutation,
   useRegisterMutation,
+  useRegisterLandlordWithDocsMutation,
   useGetHousesQuery,
   useGetLocationsQuery,
   useGetHouseByIdQuery,
@@ -175,4 +231,19 @@ export const {
   useGetProfileQuery,
   useGetComplianceLogsQuery,
   useFileReturnsMutation,
+    useGetNotificationsQuery,
+  useGetOverviewStatsQuery,
+  useListAuditLogsQuery,
+  useGetRevenueQuery,
+  useGetMarketPulseQuery,
+  useGetNeighborhoodTrendsQuery,
+  useMarkNotificationReadMutation,
+  useMarkAllNotificationsReadMutation,
+  useSubmitNilFilingMutation,
+  useVerifyComplianceMutation,
+  useVerifyNationalIdMutation,
+  useCreateStripeIntentMutation,
+  useResetSessionMutation,
+  useApproveLandlordMutation,
+  useRejectLandlordMutation,
 } = apiSlice;

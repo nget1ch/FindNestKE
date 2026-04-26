@@ -125,7 +125,7 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).unique().notNull(),
   phone: varchar('phone', { length: 20 }).unique().notNull(),
   nationalId: varchar('national_id', { length: 50 }).unique(),
-  role: userRoleEnum('role').notNull().default('tenant'),
+  role: userRoleEnum('role').notNull(),  // ✅ REQUIRED FIELD - No default to force explicit assignment
   accountStatus: accountStatusEnum('account_status').notNull().default('pending'),
   profileImage: varchar('profile_image', { length: 500 }),
   region: varchar('region', { length: 255 }),

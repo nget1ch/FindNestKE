@@ -1,6 +1,7 @@
 // src/index.ts
 import './load-env.js';
 import { serve } from '@hono/node-server';
+import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { authRouter } from './auth/auth.router.js';
@@ -22,6 +23,9 @@ app.use('/api/*', cors({
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
+
+// Serve static files (like uploaded verification docs)
+app.use('/uploads/*', serveStatic({ root: './' }));
 
 // Mount all routers under /api prefix for consistency
 app.route('/api/auth', authRouter);

@@ -29,13 +29,13 @@ export default function LandlordOverview() {
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-700 text-left">
       {/* Financial Pulse Summary Bento */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:border-primary/20 transition-all group overflow-hidden relative">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:border-primary/40 transition-all group overflow-hidden relative">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-primary/5 rounded-xl text-primary font-black">
+            <div className="p-3 bg-primary/15 rounded-xl text-primary font-black">
               <span className="material-symbols-outlined">payments</span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-40 italic">Live Pulse</span>
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-70 italic">Live Pulse</span>
             </div>
           </div>
           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-1">Portfolio Revenue</p>
@@ -43,24 +43,24 @@ export default function LandlordOverview() {
           <p className="text-[10px] text-slate-400 mt-4 font-bold italic">Net after platform fees</p>
         </div>
 
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:border-tertiary/20 transition-all group overflow-hidden relative">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:border-tertiary/40 transition-all group overflow-hidden relative">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-tertiary/5 rounded-xl text-tertiary font-black">
+            <div className="p-3 bg-tertiary/15 rounded-xl text-tertiary font-black">
               <span className="material-symbols-outlined">schedule</span>
             </div>
-            <span className="text-xs font-black text-tertiary bg-tertiary/10 px-3 py-1 rounded-full uppercase tracking-tighter">{summary.total_payments} Payouts</span>
+            <span className="text-xs font-black text-tertiary bg-tertiary/25 px-3 py-1 rounded-full uppercase tracking-tighter">{summary.total_payments} Payouts</span>
           </div>
           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-1">Expected Yield</p>
           <h3 className="text-3xl font-black font-headline text-tertiary tracking-tighter font-headline">{formatCurrency(summary.total_revenue / 4)}</h3>
           <p className="text-[10px] text-slate-400 mt-4 font-bold uppercase tracking-tighter">Monthly projection active</p>
         </div>
 
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:border-secondary/20 transition-all group overflow-hidden relative">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:border-secondary/40 transition-all group overflow-hidden relative">
           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-secondary/5 rounded-xl text-secondary font-black">
+            <div className="p-3 bg-secondary/15 rounded-xl text-secondary font-black">
               <span className="material-symbols-outlined">verified_user</span>
             </div>
-            <span className="text-[10px] font-black text-secondary bg-secondary/10 px-3 py-1 rounded-full uppercase tracking-widest">GavaReady</span>
+            <span className="text-[10px] font-black text-secondary bg-secondary/25 px-3 py-1 rounded-full uppercase tracking-widest">GavaReady</span>
           </div>
           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mb-1">Reserved Compliance</p>
           <h3 className="text-3xl font-black font-headline text-primary tracking-tighter">{formatCurrency(summary.total_revenue * 0.15)}</h3>
@@ -103,7 +103,7 @@ export default function LandlordOverview() {
                       </td>
                        <td className="px-10 py-6">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                          booking.status === 'confirmed' ? 'bg-secondary/10 text-secondary' : 'bg-slate-100 text-slate-400'
+                          booking.status === 'confirmed' ? 'bg-secondary/25 text-secondary' : 'bg-slate-100 text-slate-400'
                         }`}>
                           <span className={`w-1 h-1 rounded-full bg-current ${booking.status === 'confirmed' ? 'animate-pulse' : ''}`}></span>
                           {booking.status}

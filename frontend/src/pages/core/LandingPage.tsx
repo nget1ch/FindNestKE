@@ -28,20 +28,20 @@ export default function LandingPage() {
       <div className="relative overflow-hidden">
         <div
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `linear-gradient(115deg, rgba(0,52,97,0.92) 0%, rgba(0,26,48,0.88) 45%, rgba(0,75,135,0.75) 100%), url(${IMAGES.hero})` }}
+          style={{ backgroundImage: `linear-gradient(115deg, rgba(0,52,97,0.96) 0%, rgba(0,26,48,0.94) 45%, rgba(0,75,135,0.88) 100%), url(${IMAGES.hero})` }}
         />
         <div className="relative min-h-[88vh]">
           <PublicHeader variant="transparent" />
           <div className="mx-auto max-w-6xl px-4 pb-20 pt-28 md:px-6 md:pb-28 md:pt-36">
             <div className="max-w-2xl">
-              <p className="font-label inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white/90">
+              <p className="font-label inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/25 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
                 <Sparkles className="h-3.5 w-3.5" />
                 Chatbot-Assisted House-Hunting
               </p>
               <h1 className="font-headline mt-5 text-4xl font-extrabold leading-[1.1] tracking-tight text-white md:text-5xl lg:text-6xl">
                 Curating Kenya's finest rental homes
               </h1>
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-white/85 md:text-lg">
+              <p className="mt-5 max-w-xl text-base leading-relaxed text-white md:text-lg">
                 Find the right home faster: structured chatbot search, real listings, and M-Pesa booking — built for
                 serious tenants and professional landlords.
               </p>
@@ -55,11 +55,11 @@ export default function LandingPage() {
                 </Link>
                 <Link
                   to="/register"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/35 bg-white/10 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/15"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/55 bg-white/25 px-5 py-3 text-sm font-semibold text-white backdrop-blur transition hover:bg-white/35"
                 >
                   List your property
                 </Link>
-                <Link to="/login" className="px-2 text-sm font-medium text-white/80 underline-offset-4 hover:text-white">
+                <Link to="/login" className="px-2 text-sm font-medium text-white underline-offset-4 hover:text-white">
                   Sign in
                 </Link>
               </div>
@@ -78,7 +78,7 @@ export default function LandingPage() {
             {features.map((f) => (
               <article
                 key={f.title}
-                className="group rounded-2xl border border-surface-container-highest bg-surface-container-lowest p-6 shadow-sm transition hover:border-primary/20 hover:shadow-md"
+                className="group rounded-2xl border border-surface-container-highest bg-surface-container-lowest p-6 shadow-sm transition hover:border-primary/45 hover:shadow-md"
               >
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-fixed text-primary-container">
                   <f.icon className="h-6 w-6" strokeWidth={1.75} />
@@ -136,7 +136,7 @@ export default function LandingPage() {
                 className="h-full min-h-[280px] w-full object-cover"
                 loading="lazy"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-primary/55 to-transparent" />
             </div>
           </div>
         </div>

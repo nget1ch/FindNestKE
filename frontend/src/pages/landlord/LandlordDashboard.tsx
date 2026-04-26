@@ -48,7 +48,7 @@ export default function LandlordDashboard() {
       {/* Mobile Backdrop */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-[45] md:hidden transition-opacity"
+          className="fixed inset-0 bg-primary/45 backdrop-blur-sm z-[45] md:hidden transition-opacity"
           onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
@@ -77,8 +77,8 @@ export default function LandlordDashboard() {
                 }}
                 className={`w-full flex items-center px-6 py-4 transition-all group rounded-2xl relative border-none cursor-pointer ${
                   activeTab === item.id 
-                    ? 'text-primary bg-primary/5 font-black shadow-sm' 
-                    : 'text-slate-500 hover:bg-slate-50'
+                    ? 'text-primary bg-primary/15 font-black shadow-sm' 
+                    : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <span className={`material-symbols-outlined text-[20px] shrink-0 mr-4 ${activeTab === item.id ? 'text-primary' : 'text-slate-400 group-hover:text-primary'} transition-colors`}>{item.icon}</span>
@@ -91,15 +91,15 @@ export default function LandlordDashboard() {
         <div className="p-6">
           <div className="bg-primary p-6 rounded-[2rem] relative overflow-hidden shadow-2xl shadow-primary/20 hidden lg:block">
             <div className="relative z-10 text-white">
-              <h4 className="font-black font-headline text-[10px] uppercase tracking-widest mb-2 opacity-60">Intelligence Pack</h4>
-              <p className="text-[10px] font-medium leading-relaxed mb-4 opacity-90">Unlock regional hot-zones and seasonal yield patterns.</p>
+              <h4 className="font-black font-headline text-[10px] uppercase tracking-widest mb-2 opacity-85">Intelligence Pack</h4>
+              <p className="text-[10px] font-medium leading-relaxed mb-4 opacity-100">Unlock regional hot-zones and seasonal yield patterns.</p>
               <button className="w-full bg-white text-primary text-[10px] font-black uppercase tracking-[0.2em] py-2.5 rounded-xl hover:bg-blue-50 transition-all border-none cursor-pointer">
                 Activate
               </button>
             </div>
           </div>
           
-          <div className="mt-6 flex items-center gap-3 bg-slate-50/80 p-3 rounded-[1.75rem] border border-slate-100">
+          <div className="mt-6 flex items-center gap-3 bg-white p-3 rounded-[1.75rem] border border-slate-200">
             <Avatar className="w-8 h-8 ring-2 ring-white shadow-sm shrink-0">
               <AvatarImage src={profile?.avatar} />
               <AvatarFallback className="bg-primary text-white font-bold">{profile?.fullName?.charAt(0)}</AvatarFallback>
@@ -123,7 +123,7 @@ export default function LandlordDashboard() {
       {/* Main Content Canvas */}
       <main className="flex-1 md:ml-72 min-h-screen flex flex-col w-full min-w-0">
         {/* TopAppBar */}
-        <header className="sticky top-0 z-30 bg-white/60 backdrop-blur-3xl border-b border-slate-100/50 shadow-sm">
+        <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-3xl border-b border-slate-200 shadow-sm">
           <div className="flex justify-between items-center px-4 md:px-10 h-20 md:h-28 max-w-full gap-4">
             <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0">
               <button 
@@ -158,14 +158,14 @@ export default function LandlordDashboard() {
 
         {/* Verification Banner: Only show if KRA PIN is missing or account is inactive */}
         {(!profile?.kraPin || profile?.accountStatus !== 'active') && (
-          <div className="mx-12 mt-8 p-10 bg-secondary/5 border border-secondary/20 rounded-[3rem] shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10 animate-in slide-in-from-top-4 duration-700">
+          <div className="mx-12 mt-8 p-10 bg-secondary/15 border border-secondary/35 rounded-[3rem] shadow-sm flex flex-col lg:flex-row items-center justify-between gap-10 animate-in slide-in-from-top-4 duration-700">
             <div className="flex items-center gap-8">
               <div className="w-16 h-16 bg-secondary rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shrink-0">
                 <span className="material-symbols-outlined text-4xl">verified_user</span>
               </div>
               <div className="text-left">
                 <h4 className="font-headline font-black text-secondary text-2xl italic tracking-tighter leading-none mb-3">Fintech Verification Required.</h4>
-                <p className="text-xs font-bold text-on-surface-variant italic opacity-70">Your KRA PIN or TCC has not yet been authorized by the NestFind Compliance Node.</p>
+                <p className="text-xs font-bold text-on-surface-variant italic opacity-95">Your KRA PIN or TCC has not yet been authorized by the NestFind Compliance Node.</p>
               </div>
             </div>
             <button 

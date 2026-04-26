@@ -3,6 +3,7 @@ import * as userService from './users.service.js';
 import {
   createUserSchema,
   updateUserSchema,
+  profileUpdateSchema,
   userIdParam,
   userListQuery,
 } from '../validators/validators.js';
@@ -47,7 +48,12 @@ export const listUsers = async (c: Context) => {
 export const updateUser = async (c: Context) => {
   try {
     const { userId } = userIdParam.parse(c.req.param());
+    // 🔐 SECURITY: Use updateUserSchema which excludes role and other sensitive fields
     const updates = updateUserSchema.parse(await c.req.json());
+    // 🔐 DEFENSE IN DEPTH: Further validate that sensitive fields are not present
+    if ('role' in updates || 'accountStatus' in updates || 'email' in updates) {
+      return c.json({ error: 'Cannot update role, accountStatus, or email through this endpoint' }, 400);
+    }
     const updated = await userService.updateUser(userId, updates);
     if (!updated) return c.json({ error: 'User not found' }, 404);
     return c.json(updated, 200);
@@ -83,7 +89,8 @@ export const getProfile = async (c: Context) => {
 export const updateProfile = async (c: Context) => {
   try {
     const userId = c.get('userId');
-    const updates = updateUserSchema.parse(await c.req.json());
+    // 🔐 SECURITY: Use profileUpdateSchema to prevent users from modifying sensitive fields
+    const updates = profileUpdateSchema.parse(await c.req.json());
     const updated = await userService.updateUser(userId, updates);
     if (!updated) return c.json({ error: 'User not found' }, 404);
     return c.json({ user: updated }, 200);

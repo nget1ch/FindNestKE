@@ -1,4 +1,4 @@
-import {  } from 'react';
+import { useState } from 'react';
 import { useGetHousesQuery, useDeleteHouseMutation } from '../../store/apiSlice';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../../store';
@@ -9,10 +9,14 @@ export default function MyManagedProperties() {
   const { user } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
   
-  // 1. Fetch only MY managed assets
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 6;
+  
+  // 1. Fetch only MY managed assets with pagination
   const { data: ownedData, isLoading: loadingOwned } = useGetHousesQuery({ 
     landlordId: user?.userId,
-    limit: 50 
+    page,
+    limit: itemsPerPage 
   }, { skip: !user?.userId });
 
   // 2. Fetch global market snapshot (excluding my own if needed, but here we just take a recent sample)
@@ -123,6 +127,43 @@ export default function MyManagedProperties() {
              </div>
           )}
         </div>
+
+        {/* Pagination Controls */}
+        {ownedData?.total > itemsPerPage && (
+          <div className="mt-16 flex justify-center items-center gap-4">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="w-12 h-12 flex items-center justify-center rounded-full border border-slate-200 text-primary disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            
+            <div className="flex items-center gap-2">
+              {Array.from({ length: Math.ceil(ownedData.total / itemsPerPage) }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-10 h-10 rounded-full text-[10px] font-black transition-all ${
+                    page === p 
+                      ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-110' 
+                      : 'text-slate-400 hover:text-primary hover:bg-slate-50'
+                  }`}
+                >
+                  {String(p).padStart(2, '0')}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setPage(p => Math.min(Math.ceil(ownedData.total / itemsPerPage), p + 1))}
+              disabled={page >= Math.ceil(ownedData.total / itemsPerPage)}
+              className="w-12 h-12 flex items-center justify-center rounded-full border border-slate-200 text-primary disabled:opacity-30 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Global Market Inventory */}

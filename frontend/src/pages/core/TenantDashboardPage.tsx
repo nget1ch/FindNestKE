@@ -14,9 +14,9 @@ export default function TenantDashboardPage() {
         <div className="grid gap-6 md:grid-cols-2">
           <Link
             to="/tenant/chatbot"
-            className="group relative overflow-hidden rounded-2xl border border-surface-container-highest bg-surface-container-low p-6 shadow-sm transition hover:border-primary/30 hover:shadow-lg"
+            className="group relative overflow-hidden rounded-2xl border border-surface-container-highest bg-surface-container-low p-6 shadow-sm transition hover:border-primary/55 hover:shadow-lg"
           >
-            <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-primary-fixed/50 blur-2xl transition group-hover:bg-primary-fixed" />
+            <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-primary-fixed/80 blur-2xl transition group-hover:bg-primary-fixed" />
             <div className="relative">
               <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-on-primary">
                 <Bot className="h-6 w-6" />
@@ -32,11 +32,11 @@ export default function TenantDashboardPage() {
           </Link>
           <Link
             to="/listings"
-            className="group relative overflow-hidden rounded-2xl border border-surface-container-highest bg-surface-container-low p-6 shadow-sm transition hover:border-primary/30 hover:shadow-lg"
+            className="group relative overflow-hidden rounded-2xl border border-surface-container-highest bg-surface-container-low p-6 shadow-sm transition hover:border-primary/55 hover:shadow-lg"
           >
-            <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-secondary-fixed/30 blur-2xl" />
+            <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-secondary-fixed/55 blur-2xl" />
             <div className="relative">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-container/30 text-primary">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary-container/60 text-primary">
                 <Home className="h-6 w-6" />
               </span>
               <h2 className="font-headline mt-4 text-xl font-bold text-on-surface">Browse all listings</h2>

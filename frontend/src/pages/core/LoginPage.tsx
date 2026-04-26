@@ -28,16 +28,44 @@ export default function LoginPage() {
     const loadingToast = toast.loading('Signing in...');
     try {
       const result: any = await login({ email: email.trim(), password }).unwrap();
-      toast.success('Successfully signed in!', { id: loadingToast });
       
-      if (result.accessToken && result.user) {
-        localStorage.setItem('refreshToken', result.refreshToken || '');
-        dispatch(setCredentials({ token: result.accessToken, user: result.user }));
-        const role = normalizeStoredRole(result.user.role);
-        navigate(role === 'admin' ? '/admin' : role === 'landlord' ? '/landlord' : '/tenant', { replace: true });
+      // Verify response structure
+      if (!result.accessToken || !result.user) {
+        throw new Error('Invalid login response from server');
       }
+
+      // Save refresh token if provided
+      if (result.refreshToken) {
+        localStorage.setItem('refreshToken', result.refreshToken);
+      }
+
+      // Store credentials in Redux state (also saved to localStorage by authSlice)
+      dispatch(setCredentials({ token: result.accessToken, user: result.user }));
+
+      // Get normalized role from response
+      const userRole = normalizeStoredRole(result.user.role);
+
+      if (!userRole) {
+        console.error('⚠️ User has no valid role:', result.user.role);
+        toast.error('Invalid user role. Please contact support.');
+        return;
+      }
+
+      toast.success('Successfully signed in!', { id: loadingToast });
+
+      // Redirect based on role
+      const redirectPath =
+        userRole === 'admin'
+          ? '/admin'
+          : userRole === 'landlord'
+            ? '/landlord'
+            : '/tenant'; // Default to tenant for 'tenant' or 'seeker'
+
+      console.log('🔐 Login successful - User role:', userRole, '→ Redirecting to:', redirectPath);
+      navigate(redirectPath, { replace: true });
     } catch (err: any) {
       const errorMsg = err?.data?.error || 'Login failed. Please check your credentials.';
+      console.error('❌ Login error:', err);
       toast.error(errorMsg, { id: loadingToast });
     }
   };

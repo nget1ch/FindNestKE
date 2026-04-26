@@ -17,8 +17,13 @@ const columnMap: Record<string, string> = {
 };
 
 export const createUser = async (data: any) => {
-  const { password, email, ...userData } = data;
+  const { password, email, role, ...userData } = data;
   const normalizedEmail = email.trim().toLowerCase();
+  
+  // ✅ EXPLICIT ROLE VALIDATION
+  if (!role || !['tenant', 'landlord', 'admin'].includes(role)) {
+    throw new Error(`Invalid role: ${role}. Must be 'tenant', 'landlord', or 'admin'.`);
+  }
   
   let passwordHash: string;
   let isTemporary = false;
@@ -32,11 +37,13 @@ export const createUser = async (data: any) => {
     isTemporary = true;
   }
 
-  const accountStatus = userData.role === 'landlord' ? 'pending' : 'active';
+  const accountStatus = role === 'landlord' ? 'pending' : 'active';
   
+  // ✅ EXPLICITLY SET ROLE - Don't rely on database defaults
   const [newUser] = await db.insert(users).values({
     ...userData,
     email: normalizedEmail,
+    role,  // EXPLICITLY SET
     accountStatus
   }).returning();
   
@@ -46,6 +53,13 @@ export const createUser = async (data: any) => {
     isTemporaryPassword: isTemporary 
   });
 
+  // ✅ VERIFY ROLE WAS STORED CORRECTLY
+  if (newUser.role !== role) {
+    console.error(`⚠️  ROLE MISMATCH! Expected: ${role}, Got: ${newUser.role}`);
+    throw new Error('Role was not stored correctly. This is a critical database issue.');
+  }
+  
+  console.log(`✅ User created with role: ${role}`);
   return { 
     user: newUser, 
     temporaryPassword: tempPwd 
@@ -96,7 +110,24 @@ export const listUsers = async (query: any) => {
 };
 
 export const updateUser = async (userId: number, updates: any) => {
-  const [updated] = await db.update(users).set({ ...updates, updatedAt: new Date() }).where(eq(users.userId, userId)).returning();
+  // 🔐 SECURITY: Explicitly exclude dangerous fields that should never be updated this way
+  const DANGEROUS_FIELDS = ['role', 'accountStatus', 'userId', 'email', 'passwordHash', 'createdAt'];
+  const safeUpdates: any = { ...updates };
+  
+  // Remove any dangerous fields from the updates
+  DANGEROUS_FIELDS.forEach(field => {
+    if (field in safeUpdates) {
+      console.warn(`⚠️ [updateUser] Attempted to update protected field '${field}' - rejected`);
+      delete safeUpdates[field];
+    }
+  });
+
+  // Prevent updating to an empty object
+  if (Object.keys(safeUpdates).length === 0) {
+    throw new Error('No valid fields provided for update');
+  }
+
+  const [updated] = await db.update(users).set({ ...safeUpdates, updatedAt: new Date() }).where(eq(users.userId, userId)).returning();
   return updated;
 };
 

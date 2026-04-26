@@ -76,3 +76,13 @@ export function getHouseImage(imgData, fallback = "https://images.unsplash.com/p
   if (imgData.url) return imgData.url;
   return fallback;
 }
+/**
+ * Construct an absolute URL for a document path from the backend.
+ */
+export function getDocUrl(path) {
+  if (!path) return null;
+  if (path.startsWith('http')) return path;
+  // Fallback to localhost:3000 in dev if not absolute
+  const baseUrl = 'http://localhost:3000';
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+}
