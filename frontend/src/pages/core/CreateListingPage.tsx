@@ -50,7 +50,7 @@ export default function CreateListingPage() {
   const [location, setLocation] = useState('');
   const [monthlyRent, setMonthlyRent] = useState('');
   const [houseType, setHouseType] = useState('one_bedroom');
-  const [bedrooms, setBedrooms] = useState('1');
+  const [bathrooms, setBathrooms] = useState('1');
   const [amenities, setAmenities] = useState<Set<string>>(new Set());
   const [nearby, setNearby] = useState<Set<string>>(new Set());
   const [areaCharacter, setAreaCharacter] = useState<'urban' | 'suburban' | 'rural_quiet'>('urban');
@@ -80,9 +80,9 @@ export default function CreateListingPage() {
       toast.error('Rent must be a positive number.');
       return;
     }
-    const br = Number(bedrooms);
-    if (!Number.isFinite(br) || br < 0) {
-      toast.error('Bedrooms must be a valid number.');
+      const bath = Number(bathrooms);
+    if (!Number.isFinite(bath) || bath < 0) {
+      toast.error('Bathrooms must be a valid number.');
       return;
     }
 
@@ -91,8 +91,8 @@ export default function CreateListingPage() {
     fd.append('location', location.trim());
     fd.append('monthlyRent', String(rent));
     fd.append('houseType', houseType);
-    fd.append('bedrooms', String(br));
-    fd.append('bathrooms', '1');
+    fd.append('bedrooms', '1');
+    fd.append('bathrooms', String(bath));
     fd.append('furnishing', 'unfurnished');
     fd.append('areaCharacter', areaCharacter);
     if (description.trim()) fd.append('description', description.trim());
@@ -166,16 +166,16 @@ export default function CreateListingPage() {
               />
             </div>
             <div>
-              <label className={labelClass} htmlFor="bedrooms">
-                Bedrooms
+              <label className={labelClass} htmlFor="bathrooms">
+                Baths
               </label>
               <input
-                id="bedrooms"
+                id="bathrooms"
                 type="number"
                 min={0}
                 className={inputClass}
-                value={bedrooms}
-                onChange={(e) => setBedrooms(e.target.value)}
+                value={bathrooms}
+                onChange={(e) => setBathrooms(e.target.value)}
                 required
               />
             </div>

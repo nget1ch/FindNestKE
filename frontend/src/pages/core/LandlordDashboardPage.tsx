@@ -178,7 +178,7 @@ export default function LandlordDashboardPage() {
                 landlordBookings.map((b: any) => (
                   <li key={b.bookingId} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                     <span className="text-sm text-on-surface">
-                      <strong>#{b.bookingId}</strong> · House #{b.houseId}
+                      <strong>#{b.bookingId}</strong> · {b.house?.title || `House #${b.houseId}`}
                     </span>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${statusStyle(b.status)}`}>{b.status}</span>
                   </li>

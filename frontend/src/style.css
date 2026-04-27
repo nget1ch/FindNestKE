@@ -1396,3 +1396,8 @@ html, body {
     padding: 12px 8px;
   }
 }
+
+@keyframes loading {
+  0% { width: 0; }
+  100% { width: 100%; }
+}

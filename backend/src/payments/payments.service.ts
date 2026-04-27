@@ -1,7 +1,7 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from '../db/db.js';
 import { bookings, payments, houses, jobs } from '../db/schema.js';
-import { initiateSTKPush, parseCallback } from './mpesa.service.js';
+import { initiateSTKPush, parseCallback, querySTKStatus } from './mpesa.service.js';
 import Stripe from 'stripe';
 
 let stripeClient: Stripe | null = null;
@@ -44,13 +44,17 @@ export async function createPendingBookingAndInitiateMpesa({
   const amount = Number(house.bookingFee);
   if (amount <= 0) throw new Error('Invalid booking fee amount');
 
+  // Pre-emptive fix: Remove any existing non-finalized bookings to avoid unique constraint violations
+  // This allows the user to retry the payment flow if a previous attempt stayed in 'pending' or 'failed' status.
+  await db.delete(bookings).where(sql`${bookings.seekerId} = ${userId} AND ${bookings.houseId} = ${houseId} AND ${bookings.status} NOT IN ('paid', 'confirmed')`);
+
   // Create pending booking with the dynamic fee
   const [newBooking] = await db.insert(bookings).values({
     seekerId: userId,
     houseId,
     moveInDate: moveInDate || null,
     specialRequests: notes,
-    status: 'pending_payment',
+    status: 'pending',
     paymentMethod: 'mpesa',
     bookingFee: amount.toString(),
   }).returning();
@@ -116,7 +120,7 @@ export async function handleMpesaCallback(rawBody: any) {
 
     await db.transaction(async (trx) => {
       await trx.update(bookings)
-        .set({ status: 'confirmed', confirmedAt: new Date() })
+        .set({ status: 'paid', confirmedAt: new Date() })
         .where(eq(bookings.bookingId, existingBooking.bookingId));
 
       await trx.insert(payments).values({
@@ -151,7 +155,10 @@ export async function handleMpesaCallback(rawBody: any) {
     return { success: true, bookingId: existingBooking.bookingId };
   } else {
     logger.warn('M-Pesa payment rejected', { bookingId: existingBooking.bookingId, resultDesc });
-    await db.delete(bookings).where(eq(bookings.bookingId, existingBooking.bookingId));
+    // UPDATE: Do NOT delete the booking. Set status to 'failed' instead.
+    await db.update(bookings)
+      .set({ status: 'failed' })
+      .where(eq(bookings.bookingId, existingBooking.bookingId));
     return { success: false, message: resultDesc };
   }
 }
@@ -188,7 +195,7 @@ export async function createPendingBookingAndStripeIntent({
     houseId,
     moveInDate: moveInDate || null,
     specialRequests: notes,
-    status: 'pending_payment',
+    status: 'pending',
     paymentMethod: 'card',
     bookingFee: amount.toString(),
   }).returning();
@@ -221,7 +228,7 @@ export async function confirmStripePayment(paymentIntentId: string, bookingId: n
 
   await db.transaction(async (trx) => {
     await trx.update(bookings)
-      .set({ status: 'confirmed', confirmedAt: new Date() })
+      .set({ status: 'paid', confirmedAt: new Date() })
       .where(eq(bookings.bookingId, bookingId));
 
     const [booking] = await trx.select({ seekerId: bookings.seekerId, bookingFee: bookings.bookingFee })
@@ -255,6 +262,42 @@ export async function confirmStripePayment(paymentIntentId: string, bookingId: n
   return { success: true, bookingId };
 }
 
+// ========== STATUS SYNC (handles missed callbacks) ==========
+export async function syncMpesaPaymentStatus(booking: any) {
+  if (booking.status !== 'pending' || !booking.mpesaCheckoutRequestId) return booking;
+
+  // We actively query M-Pesa if the booking is still pending.
+  // This is a fallback for when the callback is delayed or blocked (e.g., local tunnel issues).
+  const queryResult = await querySTKStatus(booking.mpesaCheckoutRequestId);
+
+  if (queryResult.success) {
+    // ResultCode 0 means SUCCESS. However, Query API doesn't return the receipt number.
+    // We still need the callback to create a valid payment record with receipt.
+    // But if ResultCode is non-zero, it's a definite failure (e.g., 1032 = Cancelled).
+    if (queryResult.resultCode !== 0) {
+      logger.info('M-Pesa status query revealed failure', { bookingId: booking.bookingId, resultCode: queryResult.resultCode });
+      const [updated] = await db.update(bookings)
+        .set({ status: 'failed' })
+        .where(eq(bookings.bookingId, booking.bookingId))
+        .returning();
+      return updated;
+    }
+  } else {
+    // If the request is not found or expired, mark as failed
+    if (queryResult.resultDesc?.toLowerCase().includes('not found') || 
+        queryResult.resultDesc?.toLowerCase().includes('expired')) {
+      logger.warn('M-Pesa status query: Request not found or expired', { bookingId: booking.bookingId });
+      const [updated] = await db.update(bookings)
+        .set({ status: 'failed' })
+        .where(eq(bookings.bookingId, booking.bookingId))
+        .returning();
+      return updated;
+    }
+  }
+
+  return booking;
+}
+
 // ========== STATUS POLLING (unchanged, but ensure it returns correct amount) ==========
 export async function getPaymentStatusByCheckoutId(checkoutRequestId: string) {
   const [booking] = await db.select()
@@ -264,7 +307,10 @@ export async function getPaymentStatusByCheckoutId(checkoutRequestId: string) {
 
   if (!booking) return { status: 'failed', message: 'Transaction not found' };
 
-  if (booking.status === 'confirmed') {
+  // Sync with M-Pesa if still pending
+  const syncedBooking = await syncMpesaPaymentStatus(booking);
+
+  if (syncedBooking.status === 'paid' || syncedBooking.status === 'confirmed') {
     const [payment] = await db.select()
       .from(payments)
       .where(eq(payments.bookingId, booking.bookingId))
@@ -274,7 +320,7 @@ export async function getPaymentStatusByCheckoutId(checkoutRequestId: string) {
       amount: payment?.amount || booking.bookingFee,
       transactionId: payment?.mpesaReceiptNumber || payment?.transactionReference || 'N/A',
     };
-  } else if (booking.status === 'pending_payment') {
+  } else if (syncedBooking.status === 'pending') {
     return { status: 'pending' };
   } else {
     return { status: 'failed', message: 'Payment was not successful' };
@@ -289,7 +335,10 @@ export async function getPaymentStatusByBookingId(bookingId: number) {
 
   if (!booking) return { status: 'failed', message: 'Booking not found' };
 
-  if (booking.status === 'confirmed') {
+  // Sync with M-Pesa if still pending
+  const syncedBooking = await syncMpesaPaymentStatus(booking);
+
+  if (syncedBooking.status === 'paid' || syncedBooking.status === 'confirmed') {
     const [payment] = await db.select()
       .from(payments)
       .where(eq(payments.bookingId, bookingId))
@@ -299,7 +348,7 @@ export async function getPaymentStatusByBookingId(bookingId: number) {
       amount: payment?.amount || booking.bookingFee,
       transactionId: payment?.mpesaReceiptNumber || payment?.transactionReference || 'N/A',
     };
-  } else if (booking.status === 'pending_payment') {
+  } else if (syncedBooking.status === 'pending') {
     return { status: 'pending' };
   } else {
     return { status: 'failed', message: 'Payment was not successful' };

@@ -54,8 +54,10 @@ export const listingStatusEnum = pgEnum('listing_status', [
   'removed',
 ]);
 export const bookingStatusEnum = pgEnum('booking_status', [
-  'pending_payment',
+  'pending',
+  'paid',
   'confirmed',
+  'failed',
   'cancelled',
   'expired',
   'rejected',
@@ -289,7 +291,7 @@ export const bookings = pgTable(
       () => chatbotSessions.sessionId,
       { onDelete: 'set null' }
     ),
-    status: bookingStatusEnum('status').notNull().default('pending_payment'),
+    status: bookingStatusEnum('status').notNull().default('pending'),
     bookingFee: decimal('booking_fee', { precision: 10, scale: 2 }).notNull(),
     moveInDate: date('move_in_date'),
     checkoutDate: date('checkout_date'),

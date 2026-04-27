@@ -118,25 +118,28 @@ export async function initiateSTKPush({ phone, amount, accountRef, description }
     TransactionDesc: description || 'House Rental Payment',
   };
 
-  const response = await axios.post(`${getBaseUrl()}/mpesa/stkpush/v1/processrequest`, payload, {
-    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    timeout: 30000,
-  });
+  console.log('📤 Sending M-Pesa STK Push Payload:', JSON.stringify(payload, null, 2));
 
-  console.log('📱 STK Push initiated:', {
-    merchantRequestId: response.data.MerchantRequestID,
-    checkoutRequestId: response.data.CheckoutRequestID,
-    responseCode: response.data.ResponseCode,
-  });
+  try {
+    const response = await axios.post(`${getBaseUrl()}/mpesa/stkpush/v1/processrequest`, payload, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      timeout: 30000,
+    });
 
-  return {
-    success: response.data.ResponseCode === '0',
-    merchantRequestId: response.data.MerchantRequestID,
-    checkoutRequestId: response.data.CheckoutRequestID,
-    responseCode: response.data.ResponseCode,
-    responseDescription: response.data.ResponseDescription,
-    customerMessage: response.data.CustomerMessage,
-  };
+    console.log('📱 STK Push response from Safaricom:', response.data);
+
+    return {
+      success: response.data.ResponseCode === '0',
+      merchantRequestId: response.data.MerchantRequestID,
+      checkoutRequestId: response.data.CheckoutRequestID,
+      responseCode: response.data.ResponseCode,
+      responseDescription: response.data.ResponseDescription,
+      customerMessage: response.data.CustomerMessage,
+    };
+  } catch (error: any) {
+    console.error('❌ M-Pesa STK Push API Error:', error.response?.data || error.message);
+    throw error;
+  }
 }
 
 // ===================== Callback Parser =====================
@@ -166,4 +169,40 @@ export function parseCallback(body: any) {
     }
   }
   return result;
+}
+
+// ===================== STK Status Query =====================
+export async function querySTKStatus(checkoutRequestId: string) {
+  const token = await getAccessToken();
+  const timestamp = generateTimestamp();
+  const password = generatePassword(timestamp);
+  const shortcode = process.env.MPESA_SHORTCODE!;
+
+  const payload = {
+    BusinessShortCode: shortcode,
+    Password: password,
+    Timestamp: timestamp,
+    CheckoutRequestID: checkoutRequestId,
+  };
+
+  try {
+    const response = await axios.post(`${getBaseUrl()}/mpesa/stkpushquery/v1/query`, payload, {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      timeout: 20000,
+    });
+
+    return {
+      success: true,
+      resultCode: Number(response.data.ResultCode),
+      resultDesc: response.data.ResultDesc,
+      responseCode: response.data.ResponseCode,
+    };
+  } catch (error: any) {
+    const errorData = error.response?.data;
+    return {
+      success: false,
+      resultCode: errorData?.ResultCode ? Number(errorData.ResultCode) : 1,
+      resultDesc: errorData?.ResultDesc || error.message,
+    };
+  }
 }

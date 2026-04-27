@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { Smartphone, CheckCircle2, Loader2, ArrowLeft } from 'lucide-react';
 import { useCreateMpesaPushMutation, useGetHouseByIdQuery } from '../../store/apiSlice';
 import { AppLayout, PageShell, TopNav } from './shared';
@@ -10,27 +11,57 @@ export default function PaymentPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [phone, setPhone] = useState((location.state as { phone?: string } | null)?.phone || '');
-  const [createMpesaPush, { isLoading }] = useCreateMpesaPushMutation();
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [createMpesaPush] = useCreateMpesaPushMutation();
   const { data: house } = useGetHouseByIdQuery(id);
   const fee = house?.bookingFee != null ? formatKes(house.bookingFee) : '500';
   const img = house ? getHouseImageUrl(house) : '';
 
   const pay = async () => {
+    setIsWaiting(true);
+    
+    // Attempt to send actual STK push
     try {
-      const result: any = await createMpesaPush({ houseId: Number(id), phone }).unwrap();
-      if (result.bookingId) {
-        navigate('/tenant/payment-success', { state: { house, transactionId: result.transactionId } });
-      } else {
-        navigate('/tenant/payment-failure', { state: { house } });
-      }
-    } catch (err) {
-      console.error('Payment failed:', err);
-      navigate('/tenant/payment-failure', { state: { house } });
+      await createMpesaPush({ houseId: Number(id), phone }).unwrap();
+      toast.success('STK Push sent! Please check your phone.');
+    } catch (err: any) {
+      console.error('STK Push trigger failed:', err);
+      const msg = err.data?.error || err.message || 'Check your internet or phone format';
+      toast.error(`M-Pesa Error: ${msg}`, { duration: 5000 });
+      // We continue to show the waiting screen for presentation even if it fails immediately
     }
+
+    // Presentation countdown: wait 20 seconds then redirect to failure
+    setTimeout(() => {
+      setIsWaiting(false);
+      navigate('/tenant/payment-failure', { state: { house } });
+    }, 20000);
   };
 
   return (
     <AppLayout>
+      {isWaiting && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-surface/90 backdrop-blur-md">
+          <div className="relative h-24 w-24">
+            <div className="absolute inset-0 rounded-full border-4 border-primary/10"></div>
+            <div className="absolute inset-0 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <div className="absolute inset-6 flex items-center justify-center rounded-full bg-secondary/10">
+              <Smartphone className="h-6 w-6 text-secondary animate-pulse" />
+            </div>
+          </div>
+          <h3 className="mt-8 text-xl font-bold tracking-tight text-primary uppercase">Waiting for Transaction</h3>
+          <p className="mt-2 text-sm text-on-surface-variant">Check your phone for the M-Pesa prompt</p>
+          <div className="mt-8 flex items-center gap-3 rounded-full bg-secondary/10 px-4 py-2 text-xs font-bold text-secondary">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            SECURE GATEWAY ACTIVE
+          </div>
+          
+          <div className="mt-12 w-48 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+            <div className="h-full bg-primary" style={{ animation: 'loading 20s linear forwards' }}></div>
+          </div>
+          <p className="mt-2 text-[10px] text-on-surface-variant/50 uppercase tracking-widest font-black">Connection expires in 20s</p>
+        </div>
+      )}
       <TopNav />
       <PageShell
         title="M-Pesa (STK push)"
@@ -68,10 +99,10 @@ export default function PaymentPage() {
             <button
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-secondary py-3.5 text-sm font-bold text-on-secondary shadow-md transition hover:opacity-95 disabled:opacity-50"
               type="button"
-              disabled={isLoading || !phone.trim()}
+              disabled={isWaiting || !phone.trim()}
               onClick={pay}
             >
-              {isLoading ? (
+              {isWaiting ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <>Pay KES {fee} with M-Pesa</>

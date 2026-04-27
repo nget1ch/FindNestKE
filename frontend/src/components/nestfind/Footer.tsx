@@ -5,7 +5,7 @@ export default function MarketFooter() {
   return (
     <footer className="mt-auto border-t border-slate-200/80 bg-primary text-on-primary">
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-        <div className="grid gap-10 md:grid-cols-4">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <Link to="/" className="inline-flex items-center gap-2 font-headline text-lg font-bold text-white">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
@@ -36,6 +36,14 @@ export default function MarketFooter() {
             <ul className="mt-3 space-y-2 text-sm">
               <li><Link className="text-white/80 hover:text-white" to="/login">Sign in</Link></li>
               <li><Link className="text-white/80 hover:text-white" to="/register">Create account</Link></li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-headline text-sm font-semibold uppercase tracking-wider text-white/50">Support & Legal</h3>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link className="text-white/80 hover:text-white" to="/contact">Contact us</Link></li>
+              <li><Link className="text-white/80 hover:text-white" to="/privacy">Privacy Policy</Link></li>
+              <li><span className="text-white/50">Terms of Service</span></li>
             </ul>
           </div>
         </div>

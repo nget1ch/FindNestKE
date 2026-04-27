@@ -19,6 +19,8 @@ import PaymentFailurePage from './pages/core/PaymentFailurePage';
 import LandlordDashboardPage from './pages/core/LandlordDashboardPage';
 import CreateListingPage from './pages/core/CreateListingPage';
 import AdminDashboardPage from './pages/core/AdminDashboardPage';
+import PrivacyPolicyPage from './pages/core/PrivacyPolicyPage';
+import ContactPage from './pages/core/ContactPage';
 import { useAutoLogout } from './hooks/useAutoLogout';
 
 function LegacyTenantBookingRedirect() {
@@ -52,6 +54,8 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/listings" element={<ListingsPage />} />
         <Route path="/listings/:id" element={<ListingDetailsPage />} />
+        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+        <Route path="/contact" element={<ContactPage />} />
 
         {/* ═══════════════════════════════════════════════════════════════════════ */}
         {/* ROLE-BASED DASHBOARD ROUTE */}
