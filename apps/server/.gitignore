@@ -1,0 +1,17 @@
+# Dependency directories
+node_modules/
+
+# Build directory
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment and local config
+.env
+.env.*
+
+# Uploaded documents (don't track PDFs)
+uploads/verification-docs/*
+!uploads/verification-docs/.gitkeep
